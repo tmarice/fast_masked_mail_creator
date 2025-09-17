@@ -1,4 +1,5 @@
-// TODO Add test token button
+import { fetchAPIData } from "../../lib/fastmail.ts";
+
 // TODO Change prettier max line length
 const toggleButton = document.getElementById("toggle-button") as HTMLButtonElement;
 const editSection = document.getElementById("edit-section") as HTMLDivElement;
@@ -38,10 +39,30 @@ async function handleSaveButtonClick() {
   const token = inputField.value.trim();
 
   saveButton.disabled = true;
-  await chrome.storage.local.set({ fastmailToken: token });
+  status.textContent = "⏳ Verifying token…";
+
+  let accountId: string | null = null;
+  let apiUrl: string | null = null;
+
+  try {
+    const data = await fetchAPIData(token);
+    console.log(data);
+    accountId = data.accountId;
+    apiUrl = data.apiUrl;
+  } catch (e) {
+    console.error(e);
+    // TODO Provide more details on the error
+    status.textContent = "❌ Error verifying token";
+    setTimeout(() => (status.textContent = ""), 2000);
+    saveButton.disabled = false;
+    return;
+  }
+
+  await chrome.storage.local.set({ fastmailToken: token, fastmailAccountId: accountId, fastmailApiUrl: apiUrl });
   status.textContent = "✅ Token saved!";
   setTimeout(() => (status.textContent = ""), 2000);
   saveButton.disabled = false;
+
   await toggleScreens();
 }
 
