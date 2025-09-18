@@ -123,7 +123,6 @@ export async function jmapRequest<T>(
       throw new FastmailError(`Server error ${res.status}`, res.status, "server");
     }
 
-    // Non-OK, non-retried statuses
     if (!res.ok) {
       const text = await safeText(res);
       throw new FastmailError(
@@ -133,7 +132,6 @@ export async function jmapRequest<T>(
       );
     }
 
-    // Parse JSON
     try {
       const json = (await res.json()) as T;
       return json;
@@ -172,8 +170,8 @@ export async function createMaskedEmail(
   token: string,
   accountId: string,
   apiUrl: string,
-  opts?: { description?: string },
-): Promise<{ id: string; email: string; state: string }> {
+  opts?: { description?: string; forDomain?: string },
+): Promise<string> {
   const payload = {
     using: [CORE, MASKED],
     methodCalls: [
@@ -183,7 +181,8 @@ export async function createMaskedEmail(
           accountId,
           create: {
             new: {
-              ...(opts?.description ? { description: opts.description } : {}),
+              description: opts?.description || "",
+              forDomain: opts?.forDomain || "",
             },
           },
         },
@@ -191,6 +190,7 @@ export async function createMaskedEmail(
       ],
     ],
   };
+  console.log("Creating masked email with payload:", payload);
 
   const resp = await jmapRequest<JmapSetResponse>(apiUrl, token, payload);
 
@@ -206,5 +206,5 @@ export async function createMaskedEmail(
     );
   }
 
-  return { id: created.id as string, email: created.email as string, state: created.state as string };
+  return created.email as string;
 }

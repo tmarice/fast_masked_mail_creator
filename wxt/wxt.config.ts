@@ -8,6 +8,6 @@ export default defineConfig({
   manifest: {
     permissions: ["storage", "contextMenus", "scripting"],
     host_permissions: ["<all_urls>"],
-    action: { default_popup: "popup.html" }, // TODO What is this?
+    action: { default_popup: "popup.html" },
   },
 });
