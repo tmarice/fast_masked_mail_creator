@@ -6,8 +6,7 @@ export default defineConfig({
     background: "src/background.ts",
   },
   manifest: {
-    permissions: ["storage", "contextMenus", "scripting"],
-    host_permissions: ["<all_urls>"],
+    permissions: ["storage", "contextMenus", "scripting", "activeTab"],
     action: { default_popup: "popup.html" },
   },
 });

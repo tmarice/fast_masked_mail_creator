@@ -15,6 +15,7 @@ export default defineBackground(() => {
 
   chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (info.menuItemId !== MENU_ID || !tab?.id) return;
+    // TODO Add debouncind and rate limiting
 
     const [{ result: shouldFill }] = await chrome.scripting.executeScript({
       target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
@@ -89,6 +90,7 @@ export default defineBackground(() => {
       if (!fastmailToken || !fastmailAccountId || !fastmailApiUrl) {
         await chrome.action.openPopup();
       } else {
+        // TODO validate this
         const domain = new URL(tab.url).hostname;
         const maskedMail = await createMaskedEmail(fastmailToken, fastmailAccountId, fastmailApiUrl, {
           forDomain: domain,

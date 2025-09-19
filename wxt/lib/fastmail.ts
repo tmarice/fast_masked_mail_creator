@@ -159,6 +159,8 @@ export async function fetchAPIData(token: string): Promise<FastmailSessionPick> 
     throw new FastmailError("Masked Email capability not available for this account", 200, "no-masked-capability");
   }
 
+  // TODO Verify that the token has only masked email capability and nothing else
+
   return { accountId, apiUrl };
 }
 
@@ -190,7 +192,6 @@ export async function createMaskedEmail(
       ],
     ],
   };
-  console.log("Creating masked email with payload:", payload);
 
   const resp = await jmapRequest<JmapSetResponse>(apiUrl, token, payload);
 

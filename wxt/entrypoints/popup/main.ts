@@ -46,6 +46,7 @@ async function handleCancelButtonClick() {
 
 async function handleSaveButtonClick() {
   // TODO Show status messages when the form is hidden
+  // TODO Use webauthn if available to avoid storing the token directly
   const token = inputField.value.trim();
 
   if (token.length === 0) {
