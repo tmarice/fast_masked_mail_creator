@@ -7,9 +7,14 @@ const saveButton = document.getElementById("save-button") as HTMLButtonElement;
 const inputField = document.getElementById("fastmail-token") as HTMLInputElement;
 const status = document.getElementById("status") as HTMLDivElement;
 
+const dummyToken = "0".repeat(72);
+let statusTimeout = undefined;
+
+// TODO Nice to have: Add nice animations for window resizing
+
 async function setToggleButtonState() {
-  const result = await chrome.storage.local.get("fastmailToken");
-  if (!result.fastmailToken) {
+  const { fastmailToken } = await chrome.storage.local.get("fastmailToken");
+  if (!fastmailToken) {
     toggleButton.textContent = "Add Fastmail Token";
   } else {
     toggleButton.textContent = "Update Fastmail Token";
@@ -17,18 +22,15 @@ async function setToggleButtonState() {
 }
 
 async function setStatus(message: string) {
-  status.classList.remove("fading");
   status.textContent = message;
 
-  setTimeout(() => {
+  if (statusTimeout) {
+    clearTimeout(statusTimeout);
+  }
+
+  statusTimeout = setTimeout(() => {
     if (status.textContent === message) {
-      status.classList.add("fading");
-      setTimeout(() => {
-        if (status.classList.contains("fading")) {
-          status.textContent = "";
-          status.classList.remove("fading");
-        }
-      }, 300); // Match CSS transition duration
+      status.textContent = "";
     }
   }, 2000);
 }
@@ -42,12 +44,13 @@ async function toggleScreens() {
   editSection.style.display = editSection.style.display === "none" ? "block" : "none";
 
   if (editSection.style.display === "block") {
-    const { fastmailToken } = await chrome.storage.local.get(["fastmailToken"]);
-    if (typeof fastmailToken === "string") {
-      inputField.value = fastmailToken;
+    const { fastmailToken } = await chrome.storage.local.get("fastmailToken");
+    if (!!fastmailToken) {
+      inputField.value = dummyToken;
     }
     inputField.focus();
     inputField.select();
+    status.textContent = "";
   } else {
     inputField.value = "";
   }
@@ -59,12 +62,13 @@ async function handleCancelButtonClick() {
 }
 
 async function handleSaveButtonClick() {
-  // TODO Use webauthn if available to avoid storing the token directly
   const token = inputField.value.trim();
 
   if (token.length === 0) {
     await chrome.storage.local.remove(["fastmailToken", "fastmailAccountId", "fastmailApiUrl"]);
     await setStatus("🗑️ Token Removed");
+  } else if (token === dummyToken) {
+    await setStatus("ℹ️ Token Unchanged");
   } else {
     saveButton.disabled = true;
     cancelButton.disabled = true;
