@@ -90,22 +90,27 @@
       margin-top: 0.25rem;
       font-size: 0.75rem;
       color: #666;
+      text-align: center;
+      opacity: 1;
+      transition: opacity 0.3s ease;
     }
     #status:not(:empty) {
       display: block;
     }
+    #status.fading {
+      opacity: 0;
+    }
     </style>
   </head>
   <body>
-    <button id="toggle-button" style="display: block;">Edit token</button>
-    <span id="status"></span>
-
+    <button id="toggle-button" style="display: block;">Add Fastmail Token</button>
     <div id="edit-section" style="display: none;">
       <label for="fastmail-token">Fastmail API token</label>
       <input type="password" id="fastmail-token" autocomplete="off" disabled/>
       <button id="save-button" disabled>Save</button>
       <button id="cancel-button" disabled>Cancel</button>
     </div>
+    <span id="status"></span>
 
     <script type="module" src="./main.ts"></script>
   </body>

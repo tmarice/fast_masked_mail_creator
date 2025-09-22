@@ -7,14 +7,30 @@ const saveButton = document.getElementById("save-button") as HTMLButtonElement;
 const inputField = document.getElementById("fastmail-token") as HTMLInputElement;
 const status = document.getElementById("status") as HTMLDivElement;
 
-// TODO Rename this button to somethign else
-async function setButtonState() {
+async function setToggleButtonState() {
   const result = await chrome.storage.local.get("fastmailToken");
-  if (!result) {
+  if (!result.fastmailToken) {
     toggleButton.textContent = "Add Fastmail Token";
   } else {
     toggleButton.textContent = "Update Fastmail Token";
   }
+}
+
+async function setStatus(message: string) {
+  status.classList.remove("fading");
+  status.textContent = message;
+
+  setTimeout(() => {
+    if (status.textContent === message) {
+      status.classList.add("fading");
+      setTimeout(() => {
+        if (status.classList.contains("fading")) {
+          status.textContent = "";
+          status.classList.remove("fading");
+        }
+      }, 300); // Match CSS transition duration
+    }
+  }, 2000);
 }
 
 async function toggleScreens() {
@@ -35,8 +51,6 @@ async function toggleScreens() {
   } else {
     inputField.value = "";
   }
-
-  status.textContent = "";
 }
 
 async function handleCancelButtonClick() {
@@ -45,16 +59,16 @@ async function handleCancelButtonClick() {
 }
 
 async function handleSaveButtonClick() {
-  // TODO Show status messages when the form is hidden
   // TODO Use webauthn if available to avoid storing the token directly
   const token = inputField.value.trim();
 
   if (token.length === 0) {
     await chrome.storage.local.remove(["fastmailToken", "fastmailAccountId", "fastmailApiUrl"]);
-    status.textContent = "🗑️ Token Removed";
+    await setStatus("🗑️ Token Removed");
   } else {
     saveButton.disabled = true;
-    status.textContent = "⏳ Verifying Token...";
+    cancelButton.disabled = true;
+    await setStatus("⏳ Verifying Token...");
 
     let accountId: string | null = null;
     let apiUrl: string | null = null;
@@ -65,20 +79,27 @@ async function handleSaveButtonClick() {
       apiUrl = data.apiUrl;
     } catch (e) {
       // TODO Provide more details on the error
-      status.textContent = "❌ Error Verifying Token";
+      await setStatus("❌ Error Verifying Token");
+
       saveButton.disabled = false;
+      cancelButton.disabled = false;
+      inputField.focus();
+      inputField.select();
+
       return;
     }
 
     await chrome.storage.local.set({ fastmailToken: token, fastmailAccountId: accountId, fastmailApiUrl: apiUrl });
-    status.textContent = "✅ Token Saved";
+    await setStatus("✅ Token Saved");
     saveButton.disabled = false;
+    cancelButton.disabled = false;
   }
 
+  await setToggleButtonState();
   await toggleScreens();
 }
 
-document.addEventListener("DOMContentLoaded", setButtonState);
+document.addEventListener("DOMContentLoaded", setToggleButtonState);
 toggleButton.addEventListener("click", toggleScreens);
 cancelButton.addEventListener("click", handleCancelButtonClick);
 saveButton.addEventListener("click", handleSaveButtonClick);
