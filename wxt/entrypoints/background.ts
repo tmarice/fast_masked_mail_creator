@@ -117,10 +117,16 @@ export default defineBackground(() => {
       if (!fastmailToken || !fastmailAccountId || !fastmailApiUrl) {
         await chrome.action.openPopup();
       } else {
-        // TODO validate this
-        const domain = new URL(tab.url).hostname;
+        const url = new URL(tab.url);
+        const domain = url.hostname;
+        let forDomain = domain;
+
+        if (!domain || !/^[a-zA-Z0-9.-]+$/.test(domain) || domain.length > 253) {
+          forDomain = "Unknown domain";
+        }
+
         const maskedMail = await createMaskedEmail(fastmailToken, fastmailAccountId, fastmailApiUrl, {
-          forDomain: domain,
+          forDomain: forDomain,
         });
         await chrome.scripting.executeScript({
           target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
