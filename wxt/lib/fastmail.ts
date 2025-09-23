@@ -19,7 +19,8 @@ export class FastmailError extends Error {
       | "timeout"
       | "bad-json"
       | "unexpected"
-      | "no-masked-capability",
+      | "no-masked-capability"
+      | "unexpected-capabilities",
   ) {
     super(message);
     this.name = "FastmailError";
@@ -40,7 +41,6 @@ function backoffMs(attempt: number): number {
   return Math.min(5000, base + jitter);
 }
 
-// TODO Do we need this?
 async function safeText(res: Response): Promise<string | undefined> {
   try {
     return await res.text();
@@ -147,19 +147,35 @@ export async function jmapRequest<T>(
 
 export async function fetchAPIData(token: string): Promise<FastmailSessionPick> {
   const session = await jmapRequest<any>(SESSION_URL, token, undefined);
+  console.log("Session data", session);
 
   const accountId: unknown = session?.primaryAccounts?.[MASKED];
   const apiUrl: unknown = session?.apiUrl;
+  const capabilities: unknown = session?.capabilities;
 
-  // TODO Verify these failures
   if (typeof apiUrl !== "string" || !apiUrl) {
-    throw new FastmailError("Session missing apiUrl", 200, "unexpected");
+    throw new FastmailError("API response session missing apiUrl", 200, "unexpected");
+  }
+  if (typeof capabilities !== "object" || capabilities === null || Array.isArray(capabilities)) {
+    throw new FastmailError("API response session missing capabilities", 200, "unexpected");
   }
   if (typeof accountId !== "string" || !accountId) {
-    throw new FastmailError("Masked Email capability not available for this account", 200, "no-masked-capability");
+    throw new FastmailError("Token missing masked mail capability", 200, "no-masked-capability");
   }
-
-  // TODO Verify that the token has only masked email capability and nothing else
+  if (typeof capabilities[CORE] !== "object" || capabilities[CORE] === null) {
+    throw new FastmailError("Token missing core capability", 200, "no-masked-capability");
+  }
+  if (typeof capabilities[MASKED] !== "object" || capabilities[MASKED] === null) {
+    throw new FastmailError("Token missing masked email capability", 200, "no-masked-capability");
+  }
+  if (Object.keys(capabilities).some((k) => k !== CORE && k !== MASKED)) {
+    const extraCapabilities = Object.keys(capabilities).filter((k) => k !== CORE && k !== MASKED);
+    throw new FastmailError(
+      "Token has unexpected capabilities: " + extraCapabilities.join(", "),
+      200,
+      "unexpected-capabilities",
+    );
+  }
 
   return { accountId, apiUrl };
 }

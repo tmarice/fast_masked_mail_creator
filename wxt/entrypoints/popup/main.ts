@@ -82,8 +82,7 @@ async function handleSaveButtonClick() {
       accountId = data.accountId;
       apiUrl = data.apiUrl;
     } catch (e) {
-      // TODO Provide more details on the error
-      await setStatus("❌ Error Verifying Token");
+      await setStatus("❌ Error Verifying Token: " + (e instanceof Error ? e.message : String(e)));
 
       saveButton.disabled = false;
       cancelButton.disabled = false;
