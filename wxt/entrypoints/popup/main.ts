@@ -32,7 +32,7 @@ async function setStatus(message: string) {
     if (status.textContent === message) {
       status.textContent = "";
     }
-  }, 2000);
+  }, 5000);
 }
 
 async function toggleScreens() {
