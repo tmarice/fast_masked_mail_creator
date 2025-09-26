@@ -7,8 +7,8 @@ const saveButton = document.getElementById("save-button") as HTMLButtonElement;
 const inputField = document.getElementById("fastmail-token") as HTMLInputElement;
 const status = document.getElementById("status") as HTMLDivElement;
 
-const dummyToken = "0".repeat(72);
-let statusTimeout = undefined;
+const dummyToken: string = "fmu1-00000000-00000000000000000000000000000000-0-00000000000000000000000000000000";
+let statusTimeout: number | undefined = undefined;
 
 async function setToggleButtonState() {
   const { fastmailToken } = await chrome.storage.local.get("fastmailToken");
@@ -59,7 +59,7 @@ async function handleCancelButtonClick() {
   await toggleScreens();
 }
 
-async function validateTokenFormat(token: string): Promise<boolean> {
+function validateTokenFormat(token: string): Promise<boolean> {
   const tokenRegex = /^fmu1-[a-z0-9]{8}-[a-z0-9]{32}-[a-z0-9]{1}-[a-z0-9]{32}$/;
   return tokenRegex.test(token);
 }
@@ -84,7 +84,7 @@ async function handleSaveButtonClick() {
     let apiUrl: string | null = null;
 
     try {
-      if (!(await validateTokenFormat(token))) {
+      if (!validateTokenFormat(token)) {
         throw new Error("Invalid token format");
       }
       const data = await fetchAPIData(token);

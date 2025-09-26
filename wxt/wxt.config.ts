@@ -5,8 +5,8 @@ export default defineConfig({
   description: "Create and manage Fastmail masked emails",
   version: "0.1.0",
   entrypoints: {
-    popup: "./src/popup/index.html",
-    background: "src/background.ts",
+    popup: "./popup/index.html",
+    background: "background.ts",
   },
   manifest: {
     permissions: ["storage", "contextMenus", "scripting", "activeTab"],
