@@ -10,8 +10,6 @@ const status = document.getElementById("status") as HTMLDivElement;
 const dummyToken = "0".repeat(72);
 let statusTimeout = undefined;
 
-// TODO Nice to have: Add nice animations for window resizing
-
 async function setToggleButtonState() {
   const { fastmailToken } = await chrome.storage.local.get("fastmailToken");
   if (!fastmailToken) {
