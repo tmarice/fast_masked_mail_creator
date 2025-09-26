@@ -68,8 +68,11 @@ async function handleSaveButtonClick() {
   const token = inputField.value.trim();
 
   if (token.length === 0) {
-    await chrome.storage.local.remove(["fastmailToken", "fastmailAccountId", "fastmailApiUrl"]);
-    await setStatus("🗑️ Token Removed");
+    const { fastmailToken } = await chrome.storage.local.get("fastmailToken");
+    if (fastmailToken) {
+      await chrome.storage.local.remove(["fastmailToken", "fastmailAccountId", "fastmailApiUrl"]);
+      await setStatus("🗑️ Token Removed");
+    }
   } else if (token === dummyToken) {
     await setStatus("ℹ️ Token Unchanged");
   } else {
