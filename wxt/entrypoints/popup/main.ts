@@ -59,6 +59,11 @@ async function handleCancelButtonClick() {
   await toggleScreens();
 }
 
+async function validateTokenFormat(token: string): Promise<boolean> {
+  const tokenRegex = /^fmu1-[a-z0-9]{8}-[a-z0-9]{32}-[a-z0-9]{1}-[a-z0-9]{32}$/;
+  return tokenRegex.test(token);
+}
+
 async function handleSaveButtonClick() {
   const token = inputField.value.trim();
 
@@ -76,6 +81,9 @@ async function handleSaveButtonClick() {
     let apiUrl: string | null = null;
 
     try {
+      if (!(await validateTokenFormat(token))) {
+        throw new Error("Invalid token format");
+      }
       const data = await fetchAPIData(token);
       accountId = data.accountId;
       apiUrl = data.apiUrl;
