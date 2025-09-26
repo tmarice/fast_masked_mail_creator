@@ -1,4 +1,3 @@
-// TODO Add good favicon for context menu item
 import { createMaskedEmail } from "../lib/fastmail.ts";
 
 export default defineBackground(() => {

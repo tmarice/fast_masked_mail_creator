@@ -1,7 +1,9 @@
 import { defineConfig } from "wxt";
 
 export default defineConfig({
-  // TODO Add icons
+  name: "Masked Mail Manager",
+  description: "Create and manage Fastmail masked emails",
+  version: "0.1.0",
   entrypoints: {
     popup: "./src/popup/index.html",
     background: "src/background.ts",
