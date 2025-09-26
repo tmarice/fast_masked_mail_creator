@@ -147,7 +147,6 @@ export async function jmapRequest<T>(
 
 export async function fetchAPIData(token: string): Promise<FastmailSessionPick> {
   const session = await jmapRequest<any>(SESSION_URL, token, undefined);
-  console.log("Session data", session);
 
   const accountId: unknown = session?.primaryAccounts?.[MASKED];
   const apiUrl: unknown = session?.apiUrl;
