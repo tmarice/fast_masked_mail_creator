@@ -12,4 +12,9 @@ export default defineConfig({
     permissions: ["storage", "contextMenus", "scripting", "activeTab"],
     action: { default_popup: "popup.html" },
   },
+  modules: ["@wxt-dev/auto-icons"],
+  autoIcons: {
+    baseIconPath: "assets/icon.svg",
+    developmentIndicator: false,
+  },
 });
