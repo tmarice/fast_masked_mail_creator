@@ -144,7 +144,13 @@ function removeTooltip(id: string) {
 function populateEmail(maskedMail: string): void {
   const el = document.activeElement as HTMLInputElement | null;
   if (!el) return;
-  el.value = maskedMail;
+
+  const proto = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  proto?.call(el, maskedMail);
+
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertFromPaste" }));
 }
 
 function extractDomain(tab: chrome.tabs.Tab): string {
