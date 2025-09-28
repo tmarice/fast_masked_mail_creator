@@ -97,12 +97,23 @@
     #status:not(:empty) {
       display: block;
     }
+    .token-instructions {
+      font-size: 0.75rem;
+      color: #666;
+      margin: 0 0 0.75rem 0;
+      line-height: 1.4;
+    }
     </style>
   </head>
   <body>
     <button id="toggle-button" style="display: block;">Add Fastmail Token</button>
     <div id="edit-section" style="display: none;">
       <label for="fastmail-token">Fastmail API token</label>
+      <p class="token-instructions">
+        Create your <a href="https://www.fastmail.help/hc/en-us/articles/5254602856719-API-tokens" target="_blank" rel="noopener noreferrer">Fastmail API token</a> in the <a href="https://app.fastmail.com/settings/security/tokens/new" target="_blank" rel="noopener noreferrer">Fastmail Settings Page</a>.
+
+        Make sure <strong>only</strong> the "Masked Email" scope is selected.
+      </p>
       <input type="password" id="fastmail-token" autocomplete="off" autocapitalize="off" spellcheck="off"  disabled/>
       <button id="save-button" disabled>Save</button>
       <button id="cancel-button" disabled>Cancel</button>
