@@ -1,6 +1,6 @@
 {
   "name": "Masked Mail Manager",
-  "description": "Create and manage Fastmail masked emails",
+  "description": "Create single-purpose Fastmail masked mails",
   "private": true,
   "version": "0.1.0",
   "type": "module",
