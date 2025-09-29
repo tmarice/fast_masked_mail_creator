@@ -1,6 +1,6 @@
 import { createMaskedEmail } from "../lib/fastmail.ts";
 
-export default defineBackground(() => {
+export default defineBackground(async () => {
   const MENU_ID = "fastmail-email-menu";
   const RATE_LIMIT_MS = 5000;
   let lastUsed = 0;
