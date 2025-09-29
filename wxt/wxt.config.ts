@@ -1,7 +1,7 @@
 import { defineConfig } from "wxt";
 
 export default defineConfig({
-  name: "Masked Mail Manager",
+  name: "Fast Masked Mail Creator",
   description: "Create single-purpose Fastmail masked mails",
   version: "0.1.0",
   entrypoints: {

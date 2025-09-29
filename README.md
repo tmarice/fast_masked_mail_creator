@@ -1,4 +1,4 @@
-# Masked Mail Manager
+# Fast Masked Mail Creator
 
 An unofficial Chrome extension for the easy creation of new, single-purpose Fastmail masked emails.
 
