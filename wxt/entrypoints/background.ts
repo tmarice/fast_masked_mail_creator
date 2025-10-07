@@ -1,21 +1,57 @@
 import { createMaskedEmail } from "../lib/fastmail.ts";
 
 export default defineBackground(async () => {
-  const MENU_ID = "fastmail-email-menu";
+  const MASKED_EMAIL_MENU_ID = "fastmail-maked-email-menu";
+  const DISPOSABLE_EMAIL_MENU_ID = "fastmail-disposable-email-menu";
+
   const RATE_LIMIT_MS = 5000;
   let lastUsed = 0;
 
+  const DISPOSABLE_ALARM = "remove-disposable-emails-alarm";
+  const DISPOSABLE_ALARM_PERIOD = 24 * 60;
+
   chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
-      id: MENU_ID,
+      id: MASKED_EMAIL_MENU_ID,
       title: "Create Fastmail Masked Email",
+      contexts: ["editable"],
+      visible: true,
+    });
+    chrome.contextMenus.create({
+      id: DISPOSABLE_EMAIL_MENU_ID,
+      title: "Create Fastmail Disposable Email",
       contexts: ["editable"],
       visible: true,
     });
   });
 
+  // Create (or re-create) the alarm on install/update/startup.
+  chrome.runtime.onInstalled.addListener(() => {
+    chrome.alarms.create(DISPOSABLE_ALARM, { periodInMinutes: DISPOSABLE_ALARM_PERIOD });
+  });
+  chrome.runtime.onStartup.addListener(() => {
+    chrome.alarms.create(DISPOSABLE_ALARM, { periodInMinutes: DISPOSABLE_ALARM_PERIOD });
+  });
+  chrome.alarms.onAlarm.addListener(async (alarm) => {
+    if (alarm.name !== DISPOSABLE_ALARM) return;
+
+    try {
+      await cleanDisposableEmails();
+    } catch (err) {
+      console.error("Periodic task failed:", err);
+    }
+  });
+
+  // TODO Extract this function
   chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId !== MENU_ID || !tab?.id) return;
+    if (!tab?.id) return;
+
+    let disposable = false;
+    if (info.menuItemId === DISPOSABLE_EMAIL_MENU_ID) {
+      disposable = true;
+    } else if (info.menuItemId !== MASKED_EMAIL_MENU_ID) {
+      return;
+    }
 
     const [{ result: shouldFill }] = await chrome.scripting.executeScript({
       target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
@@ -57,9 +93,15 @@ export default defineBackground(async () => {
         await chrome.action.openPopup();
       } else {
         const forDomain = extractDomain(tab);
+        // TODO Potentially add a disposable- prefix
         const maskedMail = await createMaskedEmail(fastmailToken, fastmailAccountId, fastmailApiUrl, {
           forDomain: forDomain,
         });
+        if (disposable) {
+          const { disposableStore } = await chrome.storage.local.get("disposableStore");
+          disposableStore.push({ email: maskedMail, createdAt: new Date().toISOString() });
+          await chrome.storage.local.set({ disposableStore });
+        }
         await chrome.scripting.executeScript({
           target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
           func: populateEmail,
@@ -163,4 +205,20 @@ function extractDomain(tab: chrome.tabs.Tab): string {
   }
 
   return forDomain;
+}
+
+// TODO Add basic logging to app
+async function cleanDisposableEmails(): Promise<void> {
+  const { disposableStore } = await chrome.storage.local.get("disposableStore");
+  const newDisposableStore = [];
+
+  for (let { email, createdAt } of disposableStore) {
+    const createdDate = new Date(item.createdAt);
+    const ageMs = Date.now() - createdAt.getTime();
+    // TODO Stopped here!!!
+    if (ageMs > 7 * 24 * 60 * 60 * 1000) {
+      disposableStore.splice(i, 1);
+    }
+  }
+  await chrome.storage.local.set({ disposableStore });
 }

@@ -9,7 +9,7 @@ export default defineConfig({
     background: "background.ts",
   },
   manifest: {
-    permissions: ["storage", "contextMenus", "scripting", "activeTab"],
+    permissions: ["alarm", "storage", "contextMenus", "scripting", "activeTab"],
     action: { default_popup: "popup.html" },
   },
   modules: ["@wxt-dev/auto-icons"],
