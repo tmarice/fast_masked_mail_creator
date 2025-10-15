@@ -1,6 +1,9 @@
 import { fetchAPIData } from "../../lib/fastmail.ts";
+import { try_error_tracking } from "../../lib/error_tracking.ts";
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", try_error_tracking(main));
+
+async function main() {
   const toggleButton = document.getElementById("toggle-button") as HTMLButtonElement;
   const editSection = document.getElementById("edit-section") as HTMLDivElement;
   const cancelButton = document.getElementById("cancel-button") as HTMLButtonElement;
@@ -84,6 +87,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       let accountId: string | null = null;
       let apiUrl: string | null = null;
 
+      // TODO change error handling to avoid exceptions
       try {
         if (!validateTokenFormat(token)) {
           throw new Error("Invalid token format");
@@ -112,8 +116,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     await toggleScreens();
   }
 
-  await setToggleButtonState();
-  toggleButton.addEventListener("click", toggleScreens);
-  cancelButton.addEventListener("click", handleCancelButtonClick);
-  saveButton.addEventListener("click", handleSaveButtonClick);
-});
+  await try_error_tracking(setToggleButtonState());
+  toggleButton.addEventListener("click", try_error_tracking(toggleScreens));
+  cancelButton.addEventListener("click", try_error_tracking(handleCancelButtonClick));
+  saveButton.addEventListener("click", try_error_tracking(handleSaveButtonClick));
+}
