@@ -1,4 +1,4 @@
-import { createMaskedEmail } from "../lib/fastmail.ts";
+import { createMaskedEmail, FastmailError } from "../lib/fastmail.ts";
 
 export default defineBackground(async () => {
   const MENU_ID = "fastmail-email-menu";
@@ -46,17 +46,23 @@ export default defineBackground(async () => {
 
     lastUsed = Date.now();
 
-    try {
-      const { fastmailToken, fastmailAccountId, fastmailApiUrl } = await chrome.storage.local.get([
-        "fastmailToken",
-        "fastmailAccountId",
-        "fastmailApiUrl",
-      ]);
+    const { fastmailToken, fastmailAccountId, fastmailApiUrl } = await chrome.storage.local.get([
+      "fastmailToken",
+      "fastmailAccountId",
+      "fastmailApiUrl",
+    ]);
 
-      if (!fastmailToken || !fastmailAccountId || !fastmailApiUrl) {
-        await chrome.action.openPopup();
-      } else {
-        const forDomain = extractDomain(tab);
+    if (!fastmailToken || !fastmailAccountId || !fastmailApiUrl) {
+      await chrome.action.openPopup();
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
+        func: removeTooltip,
+        args: [tooltipId],
+      });
+    } else {
+      const forDomain = extractDomain(tab);
+
+      try {
         const maskedMail = await createMaskedEmail(fastmailToken, fastmailAccountId, fastmailApiUrl, {
           forDomain: forDomain,
         });
@@ -65,13 +71,34 @@ export default defineBackground(async () => {
           func: populateEmail,
           args: [maskedMail],
         });
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
+          func: removeTooltip,
+          args: [tooltipId],
+        });
+      } catch (e) {
+        if (e instanceof FastmailError) {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
+            func: updateTooltipError,
+            args: [tooltipId, e.message],
+          });
+          setTimeout(async () => {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
+              func: removeTooltip,
+              args: [tooltipId],
+            });
+          }, 3000);
+        } else {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
+            func: removeTooltip,
+            args: [tooltipId],
+          });
+          throw e;
+        }
       }
-    } finally {
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id, frameIds: info.frameId ? [info.frameId] : undefined },
-        func: removeTooltip,
-        args: [tooltipId],
-      });
     }
   });
 });
@@ -139,6 +166,13 @@ function displayTooltip(rateLimitWait: number): string | null {
 function removeTooltip(id: string) {
   const tooltip = document.getElementById(id);
   if (tooltip) tooltip.remove();
+}
+
+function updateTooltipError(id: string, errorMessage: string): void {
+  const tooltip = document.getElementById(id);
+  if (!tooltip) return;
+
+  tooltip.textContent = `Error: ${errorMessage}`;
 }
 
 function populateEmail(maskedMail: string): void {

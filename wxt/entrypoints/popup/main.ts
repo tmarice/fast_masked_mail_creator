@@ -1,12 +1,24 @@
-import { fetchAPIData } from "../../lib/fastmail.ts";
+import { fetchAPIData, FastmailError } from "../../lib/fastmail.ts";
+import { ERROR_TRACKING_STORAGE_KEY, try_error_tracking } from "../../lib/error_tracking.ts";
 
-document.addEventListener("DOMContentLoaded", async () => {
+class TokenFormatError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TokenFormatError";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", try_error_tracking(main));
+
+async function main() {
+  const mainScreen = document.getElementById("main-screen") as HTMLDivElement;
   const toggleButton = document.getElementById("toggle-button") as HTMLButtonElement;
   const editSection = document.getElementById("edit-section") as HTMLDivElement;
   const cancelButton = document.getElementById("cancel-button") as HTMLButtonElement;
   const saveButton = document.getElementById("save-button") as HTMLButtonElement;
   const inputField = document.getElementById("fastmail-token") as HTMLInputElement;
   const status = document.getElementById("status") as HTMLDivElement;
+  const errorTrackingToggle = document.getElementById("error-tracking-toggle") as HTMLDivElement;
 
   const dummyToken: string = "fmu1-00000000-00000000000000000000000000000000-0-00000000000000000000000000000000";
   let statusTimeout: number | undefined = undefined;
@@ -39,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     saveButton.disabled = !saveButton.disabled;
     cancelButton.disabled = !cancelButton.disabled;
 
-    toggleButton.style.display = toggleButton.style.display === "none" ? "block" : "none";
+    mainScreen.style.display = mainScreen.style.display === "none" ? "block" : "none";
     editSection.style.display = editSection.style.display === "none" ? "block" : "none";
 
     if (editSection.style.display === "block") {
@@ -60,9 +72,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     await toggleScreens();
   }
 
-  function validateTokenFormat(token: string): Promise<boolean> {
+  function validateTokenFormat(token: string): void {
     const tokenRegex = /^fmu1-[a-z0-9]{8}-[a-z0-9]{32}-[a-z0-9]{1}-[a-z0-9]{32}$/;
-    return tokenRegex.test(token);
+    if (!tokenRegex.test(token)) {
+      throw new TokenFormatError("Invalid Token Format");
+    }
   }
 
   async function handleSaveButtonClick() {
@@ -81,19 +95,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       cancelButton.disabled = true;
       await setStatus("⏳ Verifying Token...");
 
-      let accountId: string | null = null;
-      let apiUrl: string | null = null;
-
       try {
-        if (!validateTokenFormat(token)) {
-          throw new Error("Invalid token format");
-        }
+        validateTokenFormat(token);
         const data = await fetchAPIData(token);
-        accountId = data.accountId;
-        apiUrl = data.apiUrl;
-      } catch (e) {
-        await setStatus("❌ Error Verifying Token: " + (e instanceof Error ? e.message : String(e)));
 
+        await chrome.storage.local.set({
+          fastmailToken: token,
+          fastmailAccountId: data.accountId,
+          fastmailApiUrl: data.apiUrl,
+        });
+        await setStatus("✅ Token Saved");
+      } catch (e) {
+        if (e instanceof TokenFormatError || e instanceof FastmailError) {
+          await setStatus("❌ " + e.message);
+        } else {
+          throw e;
+        }
         saveButton.disabled = false;
         cancelButton.disabled = false;
         inputField.focus();
@@ -102,8 +119,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
-      await chrome.storage.local.set({ fastmailToken: token, fastmailAccountId: accountId, fastmailApiUrl: apiUrl });
-      await setStatus("✅ Token Saved");
       saveButton.disabled = false;
       cancelButton.disabled = false;
     }
@@ -112,8 +127,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     await toggleScreens();
   }
 
-  await setToggleButtonState();
-  toggleButton.addEventListener("click", toggleScreens);
-  cancelButton.addEventListener("click", handleCancelButtonClick);
-  saveButton.addEventListener("click", handleSaveButtonClick);
-});
+  async function loadErrorTrackingState() {
+    const result = await chrome.storage.local.get(ERROR_TRACKING_STORAGE_KEY);
+    const enabled = result[ERROR_TRACKING_STORAGE_KEY] === true; // Default to false
+    updateErrorTrackingUI(enabled);
+  }
+
+  function updateErrorTrackingUI(enabled: boolean) {
+    if (enabled) {
+      errorTrackingToggle.classList.add("active");
+    } else {
+      errorTrackingToggle.classList.remove("active");
+    }
+  }
+
+  async function toggleErrorTracking() {
+    const result = await chrome.storage.local.get(ERROR_TRACKING_STORAGE_KEY);
+    const currentState = result[ERROR_TRACKING_STORAGE_KEY] === true; // Default to false
+    const newState = !currentState;
+
+    await chrome.storage.local.set({ [ERROR_TRACKING_STORAGE_KEY]: newState });
+    updateErrorTrackingUI(newState);
+  }
+
+  await try_error_tracking(setToggleButtonState)();
+  await try_error_tracking(loadErrorTrackingState)();
+
+  toggleButton.addEventListener("click", try_error_tracking(toggleScreens));
+  cancelButton.addEventListener("click", try_error_tracking(handleCancelButtonClick));
+  saveButton.addEventListener("click", try_error_tracking(handleSaveButtonClick));
+  errorTrackingToggle.addEventListener("click", toggleErrorTracking);
+}

@@ -103,10 +103,54 @@
       margin: 0 0 0.75rem 0;
       line-height: 1.4;
     }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .toggle-label {
+      font-size: 0.75rem;
+      color: #666;
+      font-weight: 500;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 28px;
+      height: 16px;
+      background-color: #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .toggle-switch.active {
+      background-color: #0067b9;
+    }
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      background-color: white;
+      border-radius: 50%;
+      transition: transform 0.3s ease;
+    }
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(12px);
+    }
     </style>
   </head>
   <body>
-    <button id="toggle-button" style="display: block;">Add Fastmail Token</button>
+    <div id="main-screen" style="display: block;">
+      <button id="toggle-button">Add Fastmail Token</button>
+      <div class="toggle-container">
+        <span class="toggle-label">Error Reporting</span>
+        <div id="error-tracking-toggle" class="toggle-switch">
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+    </div>
     <div id="edit-section" style="display: none;">
       <label for="fastmail-token">Fastmail API token</label>
       <p class="token-instructions">
@@ -114,7 +158,7 @@
 
         Make sure <strong>only</strong> the "Masked Email" scope is selected.
       </p>
-      <input type="password" id="fastmail-token" autocomplete="off" autocapitalize="off" spellcheck="off"  disabled/>
+      <input type="password" id="fastmail-token" autocomplete="off" autocapitalize="off" spellcheck="off" disabled/>
       <button id="save-button" disabled>Save</button>
       <button id="cancel-button" disabled>Cancel</button>
     </div>

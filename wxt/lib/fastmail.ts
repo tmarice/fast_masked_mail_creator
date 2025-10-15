@@ -2,6 +2,10 @@ const SESSION_URL = "https://api.fastmail.com/jmap/session";
 const MASKED = "https://www.fastmail.com/dev/maskedemail";
 const CORE = "urn:ietf:params:jmap:core";
 
+const DEFAULT_TIMEOUT_MS = 8000;
+const DEFAULT_MAX_RETRIES = 3;
+const MAX_BACKOFF_MS = 5000;
+
 export type FastmailSessionPick = {
   accountId: string;
   apiUrl: string;
@@ -38,7 +42,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 function backoffMs(attempt: number): number {
   const base = 300 * Math.pow(2, attempt - 1);
   const jitter = Math.random() * 150;
-  return Math.min(5000, base + jitter);
+  return Math.min(MAX_BACKOFF_MS, base + jitter);
 }
 
 async function safeText(res: Response): Promise<string | undefined> {
@@ -57,8 +61,8 @@ export async function jmapRequest<T>(
 ): Promise<T> {
   if (!token) throw new FastmailError("Missing token", undefined, "auth");
 
-  const timeoutMs = opts.timeoutMs ?? 8000;
-  const maxRetries = Math.max(0, opts.retries ?? 3);
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const maxRetries = Math.max(0, opts.retries ?? DEFAULT_MAX_RETRIES);
 
   let attempt = 0;
 
@@ -92,11 +96,11 @@ export async function jmapRequest<T>(
         continue;
       }
       const isAbort = (e as any)?.name === "AbortError";
-      throw new FastmailError(
-        isAbort ? "Request timed out" : `Network error: ${String(e)}`,
-        undefined,
-        isAbort ? "timeout" : "network",
-      );
+      if (isAbort) {
+        throw new FastmailError("Request timed out", undefined, "timeout");
+      } else {
+        throw e;
+      }
     } finally {
       clearTimeout(timer);
     }
@@ -125,22 +129,20 @@ export async function jmapRequest<T>(
 
     if (!res.ok) {
       const text = await safeText(res);
-      throw new FastmailError(
-        `Unexpected ${res.status}: ${text?.slice(0, 400) || "<no body>"}`,
-        res.status,
-        "unexpected",
-      );
+      throw new Error(`Unexpected ${res.status}: ${text || "<no body>"}`);
     }
 
+    const text = await safeText(res);
+
     try {
-      const json = (await res.json()) as T;
+      const json = JSON.parse(text || "{}") as T;
       return json;
     } catch {
       if (attempt <= maxRetries) {
         await sleep(backoffMs(attempt));
         continue;
       }
-      throw new FastmailError("Malformed JSON response", res.status, "bad-json");
+      throw new Error(`Malformed JSON response: ${text || "<no body>"}`);
     }
   }
 }
