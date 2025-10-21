@@ -2,6 +2,8 @@
 
 An unofficial Chrome extension for the easy creation of new, single-purpose Fastmail masked emails.
 
+[Chrome Web Store link](https://chromewebstore.google.com/detail/fast-masked-mail-creator/jgnkjcmgagjaabogldbabgbcncakpdbb)
+
 ## What's Fastmail Masked Email?
 Fastmail's masked email feature allows you to create unique email addresses that forward to your main inbox. You can
 use a different email address for every service or newsletter you sign up for, and if you start receiving spam, you can
