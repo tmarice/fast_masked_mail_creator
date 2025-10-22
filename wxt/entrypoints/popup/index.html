@@ -106,27 +106,19 @@
     </style>
   </head>
   <body>
-    <div id="main-popup">
-      <button id="toggle-button" style="display: block;">Add Fastmail Token</button>
-      <div id="edit-section" style="display: none;">
-        <label for="fastmail-token">Fastmail API token</label>
-        <p class="token-instructions">
-          Create your <a href="https://www.fastmail.help/hc/en-us/articles/5254602856719-API-tokens" target="_blank" rel="noopener noreferrer">Fastmail API token</a> in the <a href="https://app.fastmail.com/settings/security/tokens/new" target="_blank" rel="noopener noreferrer">Fastmail Settings Page</a>.
+    <button id="toggle-button" style="display: block;">Add Fastmail Token</button>
+    <div id="edit-section" style="display: none;">
+      <label for="fastmail-token">Fastmail API token</label>
+      <p class="token-instructions">
+        Create your <a href="https://www.fastmail.help/hc/en-us/articles/5254602856719-API-tokens" target="_blank" rel="noopener noreferrer">Fastmail API token</a> in the <a href="https://app.fastmail.com/settings/security/tokens/new" target="_blank" rel="noopener noreferrer">Fastmail Settings Page</a>.
 
-          Make sure <strong>only</strong> the "Masked Email" scope is selected.
-        </p>
-        <input type="password" id="fastmail-token" autocomplete="off" autocapitalize="off" spellcheck="off"  disabled/>
-        <button id="save-button" disabled>Save</button>
-        <button id="cancel-button" disabled>Cancel</button>
-      </div>
-      <span id="status"></span>
+        Make sure <strong>only</strong> the "Masked Email" scope is selected.
+      </p>
+      <input type="password" id="fastmail-token" autocomplete="off" autocapitalize="off" spellcheck="off"  disabled/>
+      <button id="save-button" disabled>Save</button>
+      <button id="cancel-button" disabled>Cancel</button>
     </div>
-
-    <div id="error-popup" style="display: none;">
-      <p> It seems something went wrong. Would you like to send an error report to help us improve the extension?</p>
-      <button id="send-report-button">Send Report</button>
-      <button id="close-button">Close</button>
-    </div>
+    <span id="status"></span>
 
     <script type="module" src="./main.ts"></script>
   </body>
