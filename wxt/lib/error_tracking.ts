@@ -15,8 +15,7 @@ export function try_error_tracking(fn) {
       if (shouldReport) {
         Sentry.init({
           dsn: "https://776b25b815cbfc8fde6c3cc076ce9499@o4506129351114752.ingest.us.sentry.io/4510182695501824",
-          // TODO Investigate PII, minimize since I only need data for issue reproduction
-          sendDefaultPii: true,
+          sendDefaultPii: false,
         });
         Sentry.captureException(e);
       }
