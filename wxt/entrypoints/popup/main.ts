@@ -1,5 +1,5 @@
 import { fetchAPIData } from "../../lib/fastmail.ts";
-import { try_error_tracking } from "../../lib/error_tracking.ts";
+import { ERROR_TRACKING_STORAGE_KEY, try_error_tracking } from "../../lib/error_tracking.ts";
 
 document.addEventListener("DOMContentLoaded", try_error_tracking(main));
 
@@ -10,6 +10,7 @@ async function main() {
   const saveButton = document.getElementById("save-button") as HTMLButtonElement;
   const inputField = document.getElementById("fastmail-token") as HTMLInputElement;
   const status = document.getElementById("status") as HTMLDivElement;
+  const errorTrackingToggle = document.getElementById("error-tracking-toggle") as HTMLDivElement;
 
   const dummyToken: string = "fmu1-00000000-00000000000000000000000000000000-0-00000000000000000000000000000000";
   let statusTimeout: number | undefined = undefined;
@@ -116,8 +117,34 @@ async function main() {
     await toggleScreens();
   }
 
-  await try_error_tracking(setToggleButtonState());
+  async function loadErrorTrackingState() {
+    const result = await chrome.storage.local.get(ERROR_TRACKING_STORAGE_KEY);
+    const enabled = result[ERROR_TRACKING_STORAGE_KEY] !== false; // Default to true
+    updateErrorTrackingUI(enabled);
+  }
+
+  function updateErrorTrackingUI(enabled: boolean) {
+    if (enabled) {
+      errorTrackingToggle.classList.add("active");
+    } else {
+      errorTrackingToggle.classList.remove("active");
+    }
+  }
+
+  async function toggleErrorTracking() {
+    const result = await chrome.storage.local.get(ERROR_TRACKING_STORAGE_KEY);
+    const currentState = result[ERROR_TRACKING_STORAGE_KEY] !== false; // Default to true
+    const newState = !currentState;
+
+    await chrome.storage.local.set({ [ERROR_TRACKING_STORAGE_KEY]: newState });
+    updateErrorTrackingUI(newState);
+  }
+
+  await try_error_tracking(setToggleButtonState)();
+  await try_error_tracking(loadErrorTrackingState)();
+
   toggleButton.addEventListener("click", try_error_tracking(toggleScreens));
   cancelButton.addEventListener("click", try_error_tracking(handleCancelButtonClick));
   saveButton.addEventListener("click", try_error_tracking(handleSaveButtonClick));
+  errorTrackingToggle.addEventListener("click", toggleErrorTracking);
 }
